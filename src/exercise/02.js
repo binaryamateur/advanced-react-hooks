@@ -31,41 +31,60 @@ function pokemonInfoReducer(state, action) {
   }
 }
 
-function useAsync(asyncCallback, initialState){
-  const [state, dispatch] = React.useReducer(pokemonInfoReducer,initialState)
+function useAsync(initialState){
+  const [state, dispatch] = React.useReducer(pokemonInfoReducer,{ data: null, error: null, status: 'idle',...initialState});
 
-  React.useEffect(() => {
-    const promise = asyncCallback();
-    if(!promise){
-      return ;
-    }
-    dispatch({type: 'pending'})
-    promise.then(data => {
-      dispatch({type: 'resolved', data})
+
+  const run = React.useCallback((pokemonPromise) =>{
+    dispatch({type: 'pending'});
+    pokemonPromise.then(data => {
+      dispatch({type: 'resolved', data});
     },
-    error => {
-      dispatch({type: 'rejected', error})
-    },)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asyncCallback])
+    error =>{
+      dispatch({type: 'rejected', error});
+    })
+  },[])
+  // React.useEffect(() => {
+  //   const promise = asyncCallback();
+  //   if(!promise){
+  //     return ;
+  //   }
+  //   dispatch({type: 'pending'})
+  //   promise.then(data => {
+  //     dispatch({type: 'resolved', data})
+  //   },
+  //   error => {
+  //     dispatch({type: 'rejected', error})
+  //   },)
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [asyncCallback])
 
-  return {status: state.status, pokemon: state.data, error: state.error};
+  return {status: state.status, pokemon: state.data, error: state.error, run:run};
 }
 
 
 function PokemonInfo({pokemonName}) {
 
-  const state = useAsync(React.useCallback(() => {
+  // const state = useAsync(React.useCallback(() => {
+  //   if(!pokemonName){
+  //     return ;
+  //   }
+  //   return fetchPokemon(pokemonName);
+  // }, [pokemonName]),  {
+  //   status: pokemonName ? 'pending' : 'idle',
+  //   data: null,
+  //   error: null,
+  // })
+  const {pokemon, status, error, run} = useAsync({ status: pokemonName ? 'pending' : 'idle' })
+
+  React.useEffect(() =>{
     if(!pokemonName){
       return ;
     }
-    return fetchPokemon(pokemonName);
-  }, [pokemonName]),  {
-    status: pokemonName ? 'pending' : 'idle',
-    data: null,
-    error: null,
-  })
-  const {pokemon, status, error} = state
+    const pokemonPromise = fetchPokemon(pokemonName);
+    run(pokemonPromise);
+  },[pokemonName, run]);
+
 
   switch (status) {
     case 'idle':
