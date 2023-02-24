@@ -4,7 +4,7 @@
 import * as React from 'react'
 
 // 🐨 wrap this in a React.forwardRef and accept `ref` as the second argument
-React.forwardRef(function MessagesDisplay({messages, ref}) {
+const MessagesDisplay = React.forwardRef(function MessagesDisplay({messages}, ref) {
   const containerRef = React.useRef()
   React.useLayoutEffect(() => {
     scrollToBottom()
